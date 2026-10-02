@@ -28,3 +28,38 @@ services:
     container_name: loki
     ports:
       - '3100:3100'
+  
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/config.yaml
+      - /var/log:/var/log
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api
+    env_file:
+      - env/api.env
+    ports:
+      - '3001:3001'
+    depends_on:
+      - postgres
+
+  analyzer:
+    build:
+      context: ./analyzer
+      dockerfile: Dockerfile
+    container_name: analyzer
+    env_file:
+      - env/analyzer.env
+    ports:
+      - '3002:3002'
+    depends_on:
+      - prometheus
+      - loki
